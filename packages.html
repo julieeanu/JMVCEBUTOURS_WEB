@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Package</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f9f9f9;
+        }
+        .mockup {
+            background-color: #fff;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            color: #0B1534;
+            position: sticky;
+            top: 20px; 
+            height: fit-content;
+            width: 90%;
+            max-width: 400px;
+        }
+        .main-image {
+            width: 100%;
+            height: 220px;
+            border-radius: 15px;
+            background-color: #ddd; 
+            background-size: cover;
+            background-position: center;
+            margin-bottom: 10px;
+        }
+        .sub-image {
+            width: 32%;
+            height: 80px;
+            border-radius: 10px;
+            background-color: #ddd; 
+            background-size: cover;
+            background-position: center;
+        }
+        .btn-group {
+            display: flex;
+            gap: 5px;
+        }
+        #loading {
+            display: none;
+        }
+        .image-thumbnail {
+            width: 50px; 
+            height: 50px; 
+            object-fit: cover; 
+            border-radius: 5px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="mb-4">Add New Tour Package</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <form id="packageForm" onsubmit="return false;">
+                    <input type="hidden" id="packageId">
+                    <div class="form-group">
+                        <label for="packageTitle">Package Title:</label>
+                        <input type="text" class="form-control" id="packageTitle" required oninput="updatePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label for="packagePrice">Package Price:</label>
+                        <input type="number" class="form-control" id="packagePrice" required oninput="updatePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label for="packageDescription">Package Description:</label>
+                        <textarea class="form-control" id="packageDescription" rows="4" required oninput="updatePreview()"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Itinerary:</label>
+                        <input type="text" id="newItineraryItem" class="form-control mb-2" placeholder="Enter an itinerary item">
+                        <button type="button" class="btn btn-primary" onclick="addItem('itineraryList', 'newItineraryItem', 'mockupItinerary')">Add Itinerary</button>
+                        <ul id="itineraryList" class="mt-2"></ul>
+                    </div>
+                    <div class="form-group">
+                        <label>Inclusions:</label>
+                        <input type="text" id="newInclusionItem" class="form-control mb-2" placeholder="Enter an inclusion item">
+                        <button type="button" class="btn btn-primary" onclick="addItem('inclusionsList', 'newInclusionItem', 'mockupInclusions')">Add Inclusion</button>
+                        <ul id="inclusionsList" class="mt-2"></ul>
+                    </div>
+                    <div class="form-group">
+                        <label>Main Image:</label>
+                        <input type="file" class="form-control-file" id="mainImage" required onchange="updateMainImage(this)">
+                    </div>
+                    <div class="form-group">
+                        <label>Itinerary Images:</label>
+                        <input type="file" class="form-control-file" required onchange="updateSubImage(this, 1)" name="subImage1">
+                        <input type="file" class="form-control-file" required onchange="updateSubImage(this, 2)" name="subImage2">
+                        <input type="file" class="form-control-file" required onchange="updateSubImage(this, 3)" name="subImage3">
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-success" onclick="submitForm()">Add Package</button>
+                        <div id="loading" class="spinner-border text-primary" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="col-md-6">
+                <div class="mockup" id="mockup">
+                    <div class="main-image" id="mockupMainImage"></div>
+                    <div class="sub-images d-flex justify-content-between">
+                        <div class="sub-image" id="mockupSubImage1"></div>
+                        <div class="sub-image" id="mockupSubImage2"></div>
+                        <div class="sub-image" id="mockupSubImage3"></div>
+                    </div>
+                    <h2 id="mockupTitle">Package Title</h2>
+                    <div class="package-price" id="mockupPrice">₱0</div>
+                    <div class="package-description" id="mockupDescription">Explore Cebu's top attractions with our adventure tour!</div>
+                    <div class="itinerary-title">Itinerary:</div>
+                    <ul class="itinerary" id="mockupItinerary"></ul>
+                    <div class="inclusions-title">Inclusions:</div>
+                    <ul class="inclusions" id="mockupInclusions"></ul>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="mt-5">Submitted Packages</h3>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Price</th>
+                    <th>Description</th>
+                    <th>Itinerary</th>
+                    <th>Inclusions</th>
+                    <th>Main Image</th>
+                    <th>Sub Images</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="submittedPackages"></tbody>
+        </table>
+    </div>
+
+
+
+    <script>
+        let submittedPackages = [];
+
+        document.addEventListener("DOMContentLoaded", fetchPackages);
+
+        function fetchPackages() {
+            fetch('fetch_packages.php')
+                .then(response => response.json())
+                .then(data => {
+                    submittedPackages = data;
+                    console.log('Fetched Packages:', submittedPackages);
+                    displayPackages();
+                    if (submittedPackages.length > 0) {
+                        updatePreview(submittedPackages[0].package_id);
+                    }
+                })
+                .catch(error => console.error('Error fetching packages:', error));
+        }
+
+        function displayPackages() {
+            const tbody = document.getElementById('submittedPackages');
+            tbody.innerHTML = "";
+            submittedPackages.forEach(package => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${package.title}</td>
+                    <td>${package.price}</td>
+                    <td>${package.description}</td>
+                    <td><ul>${package.itinerary.split(', ').map(item => `<li>${item}</li>`).join('')}</ul></td>
+                    <td><ul>${package.inclusions.split(', ').map(item => `<li>${item}</li>`).join('')}</ul></td>
+                    <td><img src="${package.main_image}" alt="${package.title} Main Image" class="image-thumbnail"></td>
+                    <td>
+                        <div>
+                            <img src="${package.image1}" alt="Image 1" class="image-thumbnail">
+                            <img src="${package.image2}" alt="Image 2" class="image-thumbnail">
+                            <img src="${package.image3}" alt="Image 3" class="image-thumbnail">
+                        </div>
+                    </td>
+                    <td>
+                        <div class="btn-group">
+                            
+                            <button class="btn btn-danger" onclick="deletePackage(${package.package_id})">Delete</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function addItem(listId, inputId, previewId) {
+            const inputField = document.getElementById(inputId);
+            const listItem = document.createElement('li');
+            const text = inputField.value.trim();
+            if (text !== "") {
+                listItem.textContent = text;
+                document.getElementById(listId).appendChild(listItem);
+                const previewList = document.getElementById(previewId);
+                const previewItem = document.createElement('li');
+                previewItem.textContent = text;
+                previewList.appendChild(previewItem);
+                inputField.value = "";
+            }
+        }
+
+        function updateMainImage(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById('mockupMainImage').style.backgroundImage = `url(${e.target.result})`;
+                    }
+                    reader.readAsDataURL(file);
+                }
+            }
+        }
+
+        function updateSubImage(input, index) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById(`mockupSubImage${index}`).style.backgroundImage = `url(${e.target.result})`;
+                    }
+                    reader.readAsDataURL(file);
+                }
+            }
+        }
+
+        function updatePreview() {
+            document.getElementById('mockupTitle').textContent = document.getElementById('packageTitle').value || 'Package Title';
+            document.getElementById('mockupPrice').textContent = `₱${document.getElementById('packagePrice').value || '0'}`;
+            document.getElementById('mockupDescription').textContent = document.getElementById('packageDescription').value || 'Explore Cebu\'s top attractions with our adventure tour!';
+            document.getElementById('mockupItinerary').innerHTML = "";
+            document.querySelectorAll('#itineraryList li').forEach(item => {
+                const previewItem = document.createElement('li');
+                previewItem.textContent = item.textContent;
+                document.getElementById('mockupItinerary').appendChild(previewItem);
+            });
+            document.getElementById('mockupInclusions').innerHTML = "";
+            document.querySelectorAll('#inclusionsList li').forEach(item => {
+                const previewItem = document.createElement('li');
+                previewItem.textContent = item.textContent;
+                document.getElementById('mockupInclusions').appendChild(previewItem);
+            });
+        }
+
+       function submitForm() {
+    const formData = new FormData();
+    formData.append('title', document.getElementById('packageTitle').value);
+    formData.append('price', document.getElementById('packagePrice').value);
+    formData.append('description', document.getElementById('packageDescription').value);
+
+    // Collect itinerary items
+    const itineraryItems = Array.from(document.getElementById('itineraryList').children)
+        .map(item => item.textContent);
+    formData.append('itinerary_items', JSON.stringify(itineraryItems));
+
+    // Collect inclusion items
+    const inclusionItems = Array.from(document.getElementById('inclusionsList').children)
+        .map(item => item.textContent);
+    formData.append('inclusion_items', JSON.stringify(inclusionItems));
+
+    // Add images
+    formData.append('mainImage', document.getElementById('mainImage').files[0]);
+    formData.append('subImage1', document.getElementsByName('subImage1')[0].files[0]);
+    formData.append('subImage2', document.getElementsByName('subImage2')[0].files[0]);
+    formData.append('subImage3', document.getElementsByName('subImage3')[0].files[0]);
+
+    // Show loading indicator
+    document.getElementById('loading').style.display = 'block';
+
+    // Send the request
+    fetch('addPackage.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('loading').style.display = 'none';
+        alert(data.message);
+        if (data.success) {
+            fetchPackages(); // Refresh the list of packages
+            document.getElementById('packageForm').reset(); // Clear the form
+        }
+    })
+    .catch(error => {
+        document.getElementById('loading').style.display = 'none';
+        console.error('Error:', error);
+        alert('An error occurred while adding the package.');
+    });
+}
+
+
+function updateEditMainImage(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('mockupMainImage').style.backgroundImage = `url(${e.target.result})`;
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+}
+
+function editPackage(packageId) {
+    // Find the package by ID
+    const packageToEdit = submittedPackages.find(pkg => pkg.package_id === packageId);
+    
+    if (packageToEdit) {
+        // Fill the modal fields with package data
+        document.getElementById('editPackageId').value = packageToEdit.package_id;
+        document.getElementById('editPackageTitle').value = packageToEdit.title;
+        document.getElementById('editPackagePrice').value = packageToEdit.price;
+        document.getElementById('editPackageDescription').value = packageToEdit.description;
+
+        // Open the modal
+        $('#editPackageModal').modal('show');
+    }
+}
+function updatePackage() {
+    const packageId = document.getElementById('editPackageId').value;
+    const updatedTitle = document.getElementById('editPackageTitle').value;
+    const updatedPrice = document.getElementById('editPackagePrice').value;
+    const updatedDescription = document.getElementById('editPackageDescription').value;
+
+    const updateData = {
+        package_id: packageId,
+        title: updatedTitle,
+        price: updatedPrice,
+        description: updatedDescription,
+        // You can add additional fields for itinerary and inclusions
+    };
+
+    fetch('edite_package.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updateData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close the modal
+            $('#editPackageModal').modal('hide');
+            // Refresh the packages list
+            fetchPackages();
+        } else {
+            alert('Failed to update package: ' + data.message);
+        }
+    })
+    .catch(error => console.error('Error updating package:', error));
+}
+
+
+        // Function to delete a package by ID
+function deletePackage(packageId) {
+    if (confirm("Are you sure you want to delete this package?")) {
+        fetch('delete_package.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                'package_id': packageId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                fetchPackages(); // Refresh the package list after deletion
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => console.error('Error deleting package:', error));
+    }
+}
+
+
+    </script>
+    <!-- Edit Package Modal -->
+<div class="modal fade" id="editPackageModal" tabindex="-1" role="dialog" aria-labelledby="editPackageModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editPackageModalLabel">Edit Package</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editPackageForm" onsubmit="return false;">
+                    <input type="hidden" id="editPackageId">
+                    <div class="form-group">
+                        <label for="editPackageTitle">Package Title:</label>
+                        <input type="text" class="form-control" id="editPackageTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editPackagePrice">Package Price:</label>
+                        <input type="number" class="form-control" id="editPackagePrice" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editPackageDescription">Package Description:</label>
+                        <textarea class="form-control" id="editPackageDescription" rows="4" required></textarea>
+                    </div>
+                    <!-- Additional fields for itinerary and inclusions can be added here -->
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="updatePackage()">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

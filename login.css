@@ -1,0 +1,111 @@
+body{
+    margin: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    height: 100vh;
+}
+.container{
+    display: flex;
+    width: 100%;
+}
+
+ .left-panel {
+    width: 50%;
+    background-image: url('loginCover.png'); /* Corrected path */
+    background-size: cover;
+    background-position: center;
+}
+
+.right-panel{
+    width: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f8f9fa;
+}
+.form-container{
+    width: 300px;
+    text-align: center;
+}
+.form-container h1{
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+.form-container p{
+    font-size: 14px;
+    color: gray;
+    margin-bottom: 30px
+}
+input[type="email"], input[type="password"]{
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+input[type="email"], input[type="password"], .form-container button{
+    box-sizing: border-box;
+}
+
+.form-container button{
+    width: 100%;
+    padding: 10px;
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    box-sizing: border-box; /* Ensure the button respects padding and border */
+    margin: 10px 0; /* Add margin to maintain spacing similar to inputs */
+}
+.form-container button:hover{
+    background-color: #555;
+}
+.form-container a{
+    display: block;
+    margin-top: 10px;
+    color: #007bff;
+    text-decoration: none;
+}
+
+@media screen and (max-width:1024px){
+    .left-panel, .right-panel{
+        width: 100%;
+    }
+    .left-panel{
+        display: none;
+    }
+}
+@media screen and ( max-width: 768px){
+    .form-container{
+        width: 90%;
+        padding: 0 20px;
+    }
+    .form-container h1{
+        font-size: 20px
+    }
+    .form-container p{
+        font-size: 12px;
+    }
+}
+@media screen and (max-width: 480px){
+    .form-container{
+        width: 100%;
+     
+    }
+    input[type="email"],input[type="password"], .form-container button{
+        padding: 8px;
+        font-size: 14px;
+    }
+    .form-container h1{
+        font-size: 18px;
+    }
+    .form-container p{
+        font-size: 12px;
+        margin-bottom: 20px;
+    }
+}    
+
+    
+
